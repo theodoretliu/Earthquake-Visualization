@@ -132,8 +132,10 @@
   xhr.onreadystatechange = function(e) {
     if (xhr.readyState === 4) {
       if (xhr.status === 200) {
+        console.log(xhr.responseText);
         var data = JSON.parse(xhr.responseText);
         window.data = data;
+        console.log(data);
         globe.addData(data, {format: 'legend'});
         globe.createPoints();
         globe.animate();

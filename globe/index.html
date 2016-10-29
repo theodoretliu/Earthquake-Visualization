@@ -10,7 +10,7 @@
 		body {
 			margin: 0;
 			padding: 0;
-			background: #000000 url(/globe/loading.gif) center center no-repeat;
+			background: #000000 url(loading.gif) center center no-repeat;
 			color: #ffffff;
 			font-family: sans-serif;
 			font-size: 13px;
@@ -95,7 +95,7 @@
 			position: absolute;
 			bottom: 15px;
 			left: 20px;
-			background: url(/globe/ce.png);
+			background: url(ce.png);
 		}
 
 
@@ -123,66 +123,155 @@
 		<span>This is a Chrome Experiment</span>
 	</a>
 
-	<script type="text/javascript" src="/globe/third-party/Detector.js"></script>
-	<script type="text/javascript" src="/globe/third-party/three.min.js"></script>
-	<script type="text/javascript" src="/globe/third-party/Tween.js"></script>
-	<script type="text/javascript" src="/globe/globe.js"></script>
+	<script type="text/javascript" src="third-party/Detector.js"></script>
+	<script type="text/javascript" src="third-party/three.min.js"></script>
+	<script type="text/javascript" src="third-party/Tween.js"></script>
+	<script type="text/javascript" src="globe.js"></script>
 	<script type="text/javascript">
+		function padding(number, length) {
+			var s = number + "";
+    		while (s.length < length) {
+    			s = "0" + s;
+    		}
 
-		if(!Detector.webgl){
-			Detector.addGetWebGLMessage();
-		} else {
-
-			var years = ['1990','1995','2000'];
-			var container = document.getElementById('container');
-			var globe = new DAT.Globe(container);
-
-			console.log(globe);
-			var i, tweens = [];
-
-			var settime = function(globe, t) {
-				return function() {
-					new TWEEN.Tween(globe).to({time: t/years.length},500).easing(TWEEN.Easing.Cubic.EaseOut).start();
-					var y = document.getElementById('year'+years[t]);
-					if (y.getAttribute('class') === 'year active') {
-						return;
-					}
-					var yy = document.getElementsByClassName('year');
-					for(i=0; i<yy.length; i++) {
-						yy[i].setAttribute('class','year');
-					}
-					y.setAttribute('class', 'year active');
-				};
-			};
-
-			for(var i = 0; i<years.length; i++) {
-				var y = document.getElementById('year'+years[i]);
-				y.addEventListener('mouseover', settime(globe,i), false);
-			}
-
-			var xhr;
-			TWEEN.start();
-
-
-			xhr = new XMLHttpRequest();
-			xhr.open('GET', '/globe/population909500.json', true);
-			xhr.onreadystatechange = function(e) {
-				if (xhr.readyState === 4) {
-					if (xhr.status === 200) {
-						var data = JSON.parse(xhr.responseText);
-						window.data = data;
-						for (i=0;i<data.length;i++) {
-							globe.addData(data[i][1], {format: 'magnitude', name: data[i][0], animated: true});
-						}
-						globe.createPoints();
-						settime(globe,0)();
-						globe.animate();
-            			document.body.style.backgroundImage = 'none'; // remove loading
-			        }
-			    }
-			};
-			xhr.send(null);
+    		return s;
 		}
+
+		// var data1 = JSON.parse(xhr1.responseText);
+		// var array = data1.features;
+		// var goodStuff = "[";
+
+		// for (var i = 0; i < array.length; i++) {
+		// 	var object = array[i];
+		// 	goodStuff += object.geometry.coordinates[0] + "," + object.geometry.coordinates[1] + ",";
+		// 	goodStuff += object.properties.mag + ","
+		// }
+
+		// goodStuff = goodStuff.substring(0, goodStuff.length - 1) + "]";
+
+		// Where to put the globe?
+		var container = document.getElementById( 'container' );
+
+		// Make the globe
+		var globe = new DAT.Globe(container);
+
+		// get today's date and prepare the format of the url
+		var date = new Date();
+		var startTime = "" + (date.getFullYear() - 1) + "-" + padding(date.getMonth() + 1, 2) + "-" + padding(date.getDate(), 2);
+		var endTime = "" + date.getFullYear() + "-" + padding(date.getMonth() + 1, 2) + "-" + padding(date.getDate(), 2);
+
+		var xhr = new XMLHttpRequest();
+		var url = "http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=" + startTime + "&endtime=" + endTime + "&minmagnitude=4";
+		xhr.open("GET", url, true);
+
+		// What do we do when we have it?
+		xhr.onreadystatechange = function() {
+
+		    // If we've received the data
+		    if (xhr.readyState === 4 && xhr.status === 200) {
+
+	    		var rawData = JSON.parse(xhr.responseText);
+	    		console.log(rawData);
+				var features = rawData.features;
+				console.log(features.length);
+				var goodData = "[[\"today\",[";
+				var maxMag = 0;
+
+				for (var j = 0; j < features.length; j++) {
+					var object = features[j];
+					if (object.properties.mag > maxMag) {
+						maxMag = object.properties.mag;
+					}
+				}
+				console.log(maxMag);
+
+				var maxEnergy = Math.pow(10, 3 / 2 * (maxMag + 10.7));
+				for (var i = 0; i < features.length; i++) {
+					var object = features[i];
+					goodData += object.geometry.coordinates[1] + "," + object.geometry.coordinates[0] + ",";
+					var energy = Math.pow(10, 3 / 2 * (object.properties.mag + 10.7));
+
+					goodData += (energy / maxEnergy) + ","
+				}
+
+				goodData = goodData.substring(0, goodData.length - 1) + "]]]";
+				console.log(goodData);
+		        // Parse the JSON
+		        var data = JSON.parse(goodData);
+		        console.log(data);
+
+		        // Tell the globe about your JSON data
+		        for ( var i = 0; i < data.length; i ++ ) {
+		            globe.addData(data[i][1], {format: 'magnitude', name: data[i][0]} );
+		        }
+
+		        globe.createPoints();
+
+		        globe.animate();
+
+		        document.body.style.backgroundImage = 'none';
+		    }
+		};
+
+		// Begin request
+		xhr.send(null);
+
+		
+
+		// if(!Detector.webgl){
+		// 	Detector.addGetWebGLMessage();
+		// } else {
+
+		// 	var years = ['1990','1995','2000'];
+		// 	var container = document.getElementById('container');
+		// 	var globe = new DAT.Globe(container);
+
+		// 	console.log(globe);
+		// 	var i, tweens = [];
+
+		// 	var settime = function(globe, t) {
+		// 		return function() {
+		// 			new TWEEN.Tween(globe).to({time: t/years.length},500).easing(TWEEN.Easing.Cubic.EaseOut).start();
+		// 			var y = document.getElementById('year'+years[t]);
+		// 			if (y.getAttribute('class') === 'year active') {
+		// 				return;
+		// 			}
+		// 			var yy = document.getElementsByClassName('year');
+		// 			for(i=0; i<yy.length; i++) {
+		// 				yy[i].setAttribute('class','year');
+		// 			}
+		// 			y.setAttribute('class', 'year active');
+		// 		};
+		// 	};
+
+		// 	for(var i = 0; i<years.length; i++) {
+		// 		var y = document.getElementById('year'+years[i]);
+		// 		y.addEventListener('mouseover', settime(globe,i), false);
+		// 	}
+
+		// 	var xhr;
+		// 	TWEEN.start();
+
+
+		// 	xhr = new XMLHttpRequest();
+		// 	xhr.open('GET', 'population909500.json', true);
+		// 	xhr.onreadystatechange = function(e) {
+		// 		if (xhr.readyState === 4) {
+		// 			if (xhr.status === 200) {
+		// 				var data = JSON.parse(xhr.responseText);
+		// 				window.data = data;
+		// 				for (i=0;i<data.length;i++) {
+		// 					globe.addData(data[i][1], {format: 'magnitude', name: data[i][0], animated: true});
+		// 				}
+		// 				globe.createPoints();
+		// 				settime(globe,0)();
+		// 				globe.animate();
+  //           			document.body.style.backgroundImage = 'none'; // remove loading
+		// 	        }
+		// 	    }
+		// 	};
+		// 	xhr.send(null);
+		// }
 	</script>
 </body>
 </html>
