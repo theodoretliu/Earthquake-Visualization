@@ -106,17 +106,17 @@
 	<div id="container"></div>
 
 	<div id="info">
-		<strong><a href="http://www.chromeexperiments.com/globe">WebGL Globe</a></strong> <span class="bull">&bull;</span> Created by the Google Data Arts Team <span class="bull">&bull;</span> Data acquired from <a href="http://sedac.ciesin.columbia.edu/gpw/">SEDAC</a>
+		<strong><a href="http://www.chromeexperiments.com/globe">WebGL Globe</a></strong> <span class="bull">&bull;</span> Created by Theodore Liu <span class="bull">&bull;</span> Data acquired from <a href="http://earthquake.usgs.gov/">USGS Earthquakes</a>
 	</div>
 
 	<div id="currentInfo">
-		<span id="year1990" class="year">1990</span>
-		<span id="year1995" class="year">1995</span>
-		<span id="year2000" class="year">2000</span>
+		<span id="maxMag" class="year">Magnitude </span>
+		<span id="latitude" class="year">Latitude </span>
+		<span id="longitude" class="year">Longitude </span>
 	</div>
 
 	<div id="title">
-		World Population
+		Annual Earthquakes
 	</div>
 
 	<a id="ce" href="http://www.chromeexperiments.com/globe">
@@ -157,13 +157,21 @@
 				var features = rawData.features;
 				var goodData = "[";
 				var maxMag = 0;
+				var maxLat;
+				var maxLong;
 
 				for (var j = 0; j < features.length; j++) {
 					var object = features[j];
 					if (object.properties.mag > maxMag) {
 						maxMag = object.properties.mag;
+						maxLat = object.geometry.coordinates[1].toFixed(3);
+						maxLong = object.geometry.coordinates[0].toFixed(3);
 					}
 				}
+
+				document.getElementById("maxMag").innerHTML += maxMag;
+				document.getElementById("latitude").innerHTML += maxLat;
+				document.getElementById("longitude").innerHTML += maxLong;
 
 				var maxEnergy = Math.pow(10, 3 / 2 * (maxMag + 10.7));
 				for (var i = 0; i < features.length; i++) {
