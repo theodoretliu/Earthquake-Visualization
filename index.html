@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html lang="en">
 <head>
-	<title>WebGL Globe</title>
+	<title>Annual Earthquakes</title>
 	<meta charset="utf-8">
 	<style type="text/css">
 		html {
@@ -68,7 +68,6 @@
 
 		.year {
 			font: 16px Georgia;
-			line-height: 26px;
 			height: 30px;
 			text-align: center;
 			float: left;
@@ -98,6 +97,14 @@
 			background: url(ce.png);
 		}
 
+		p {
+			display: block;
+			text-align:center;
+			margin-top: 0px;
+			margin-bottom: 5px;
+			font: 16px Georgia;
+			color: rgba(255, 255, 255, 0.4);
+		}
 
 	</style>
 </head>
@@ -108,8 +115,9 @@
 	<div id="info">
 		<strong><a href="http://www.chromeexperiments.com/globe">WebGL Globe</a></strong> <span class="bull">&bull;</span> Created by Theodore Liu <span class="bull">&bull;</span> Data acquired from <a href="http://earthquake.usgs.gov/">USGS Earthquakes</a>
 	</div>
-
+	
 	<div id="currentInfo">
+		<p>Largest Earthquake</p>
 		<span id="maxMag" class="year">Magnitude </span>
 		<span id="latitude" class="year">Latitude </span>
 		<span id="longitude" class="year">Longitude </span>
