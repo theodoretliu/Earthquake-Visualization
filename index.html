@@ -7,6 +7,7 @@
 		html {
 			height: 100%;
 		}
+
 		body {
 			margin: 0;
 			padding: 0;
@@ -19,7 +20,6 @@
 		}
 
 		#info {
-
 			font-size: 11px;
 			position: absolute;
 			bottom: 5px;
@@ -27,7 +27,6 @@
 			border-radius: 3px;
 			right: 10px;
 			padding: 10px;
-
 		}
 
 		#currentInfo {
@@ -46,6 +45,7 @@
 			color: #aaa;
 			text-decoration: none;
 		}
+
 		a:hover {
 			text-decoration: underline;
 		}
@@ -66,21 +66,13 @@
 			padding: 10px;
 		}
 
-		.year {
+		p.year {
 			font: 16px Georgia;
 			height: 30px;
 			text-align: center;
 			float: left;
 			width: 90px;
 			color: rgba(255, 255, 255, 0.4);
-
-			cursor: pointer;
-			-webkit-transition: all 0.1s ease-out;
-		}
-
-		.year:hover, .year.active {
-			font-size: 23px;
-			color: #fff;
 		}
 
 		#ce span {
@@ -106,10 +98,14 @@
 			color: rgba(255, 255, 255, 0.4);
 		}
 
+		#place {
+			position: relative;
+			display: block;
+			top: 5px;
+		}
 	</style>
 </head>
 <body>
-
 	<div id="container"></div>
 
 	<div id="info">
@@ -118,9 +114,10 @@
 	
 	<div id="currentInfo">
 		<p>Largest Earthquake</p>
-		<span id="maxMag" class="year">Magnitude </span>
-		<span id="latitude" class="year">Latitude </span>
-		<span id="longitude" class="year">Longitude </span>
+		<p id="maxMag" class="year">Magnitude </p>
+		<p id="latitude" class="year">Latitude </p>
+		<p id="longitude" class="year">Longitude </p>
+		<p id="place"></p>
 	</div>
 
 	<div id="title">
@@ -136,6 +133,7 @@
 	<script type="text/javascript" src="third-party/Tween.js"></script>
 	<script type="text/javascript" src="globe.js"></script>
 	<script type="text/javascript">
+		// simple function to allow leading zeros to integers
 		function padding(number, length) {
 			var s = number + "";
     		while (s.length < length) {
@@ -153,35 +151,35 @@
 		var startTime = "" + (date.getFullYear() - 1) + "-" + padding(date.getMonth() + 1, 2) + "-" + padding(date.getDate(), 2);
 		var endTime = "" + date.getFullYear() + "-" + padding(date.getMonth() + 1, 2) + "-" + padding(date.getDate(), 2);
 
-
+		// API request for earthquakes in past year with magnitude greater than 4 and sorted by magnitude
 		var xhr = new XMLHttpRequest();
-		var url = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=" + startTime + "&endtime=" + endTime + "&minmagnitude=4";
+		var url = "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=" + startTime + "&endtime=" + endTime + "&minmagnitude=4&orderby=magnitude";
 		xhr.open("GET", url, true);
 
 		xhr.onreadystatechange = function(e) {
 		    if (xhr.readyState === 4 && xhr.status === 200) {
+		    	// get the data from the API
 	    		var rawData = JSON.parse(xhr.responseText);
 
+	    		// we only want the features of the earthquakes
 				var features = rawData.features;
 				var goodData = "[";
-				var maxMag = 0;
-				var maxLat;
-				var maxLong;
 
-				for (var j = 0; j < features.length; j++) {
-					var object = features[j];
-					if (object.properties.mag > maxMag) {
-						maxMag = object.properties.mag;
-						maxLat = object.geometry.coordinates[1].toFixed(3);
-						maxLong = object.geometry.coordinates[0].toFixed(3);
-					}
-				}
+				// since the API returns sorted, grab information about the first earthquake in list
+				var maxMag = features[0].properties.mag;
+				var maxLat = features[0].geometry.coordinates[1].toFixed(3);
+				var maxLong = features[0].geometry.coordinates[0].toFixed(3);
 
-				document.getElementById("maxMag").innerHTML += maxMag;
+				// display information about largest earthquake
+				document.getElementById("place").innerHTML = features[0].properties.place;
+				document.getElementById("maxMag").innerHTML += maxMag.toFixed(1);
 				document.getElementById("latitude").innerHTML += maxLat;
 				document.getElementById("longitude").innerHTML += maxLong;
 
+				// calculate absolute energy released by largest earthquake to normalize later
 				var maxEnergy = Math.pow(10, 3 / 2 * (maxMag + 10.7));
+
+				// get relevant data about each earthquake and normalize
 				for (var i = 0; i < features.length; i++) {
 					var object = features[i];
 					goodData += object.geometry.coordinates[1] + "," + object.geometry.coordinates[0] + ",";
@@ -200,7 +198,6 @@
 		        
 		        globe.createPoints();
 		        globe.animate();
-		        document.body.style.backgroundImage = 'none';
 		    }
 		};
 
